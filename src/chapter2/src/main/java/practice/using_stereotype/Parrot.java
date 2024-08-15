@@ -8,10 +8,12 @@ import javax.annotation.PostConstruct;
 public class Parrot {
     private String name;
 
+    @SuppressWarnings("unused")
     public String getName() {
         return name;
     }
 
+    @SuppressWarnings("unused")
     public void setName(String name) {
         this.name = name;
     }
