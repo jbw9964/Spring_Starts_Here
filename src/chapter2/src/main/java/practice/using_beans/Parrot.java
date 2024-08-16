@@ -3,6 +3,7 @@ package practice.using_beans;
 public class Parrot {
     private String name;
 
+    @SuppressWarnings("unused")
     public String getName() {
         return name;
     }
