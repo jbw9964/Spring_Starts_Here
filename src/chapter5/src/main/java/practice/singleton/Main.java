@@ -9,11 +9,18 @@ public class Main {
         var context
                 = new AnnotationConfigApplicationContext(Config.class);
 
+        for (String names : context.getBeanDefinitionNames())
+            System.out.println(names);
+
         SingletonBean bean1 = context.getBean(SingletonBean.class);
         SingletonBean bean2 = context.getBean(SingletonBean.class);
         SingletonBean bean3 = context.getBean(SingletonBean.class);
 
         showProperties(bean1, bean2, bean3);
+
+        System.out.println("------------------------------");
+        for (String names : context.getBeanDefinitionNames())
+            System.out.println(names);
     }
 
     static void showProperties(Object... objs) {
