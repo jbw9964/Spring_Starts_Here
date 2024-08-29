@@ -2,13 +2,13 @@
 
 ---
 
-이전 글에서는 AOP 에 대한 필수적인 지식과 Spring-aop 가 
+이전 글에서는 AOP 에 대한 필수적인 지식과 Spring-aop 가 Proxy 를 이용해 작동하는 것을 알아보았다.
+
+이번 글에서는 실제로 스프링에서 aspect 를 사용하는 방법에 대해 알아보자.
 
 ---
 
 ## Advices in Spring
-
-이제 aspect 사용법에 대해 알아보자.
 
 스프링의 aspect 는 `spring-aspect` 혹은 `aspectj` 관련 라이브러리가 필요하다. (사실 `spring-aspect` 라이브러리가 `aspectjweaver` 라이브러리를 의존하고 있어서 뭐든 비슷하다.)
 
@@ -52,44 +52,55 @@ public class SomeAspect {
 
 스프링은 대표적인 5 종류의 Advice 를 사용할 수 있다. [`[2]`](#reference)
 
-| **Advice**          | **Description**                                                 |
-|---------------------|-----------------------------------------------------------------|
-| `@Before`           | 메서드 실행 이전에 실행되고픈 Advice                                         |
-| `@AfterReturning`   | 메서드가 정상적으로 실행 후, 호출된 곳으로 실행 결과 `(return)` 를 전달하기 전 실행되고픈 Advice |
-| `@AfterThrowing`    | 메서드 실행 중 에러가 throw 되었을 때 실행되고픈 Advice                           |
-| `@After, (finally)` | 메서드 실행 (throw 포함) 후, 실행되고픈 Advice (`try-finally` 와 동치)          |
-| `@Around`           | 메서드 실행 이전, 에러 throw 후, 실행 후 등 위 모든 Advice 를 포괄할 수 있는 Advice     |
+| **Advice**          | **Description**                                                |
+|---------------------|----------------------------------------------------------------|
+| `@Before`           | 메서드 실행 이전에 실행되고픈 어드바이스                                         |
+| `@AfterReturning`   | 메서드가 정상적으로 실행 후, 호출된 곳으로 실행 결과 `(return)` 를 전달하기 전 실행되고픈 어드바이스 |
+| `@AfterThrowing`    | 메서드 실행 중 에러가 throw 되었을 때 실행되고픈 어드바이스                           |
+| `@After, (finally)` | 메서드 실행 (throw 포함) 후, 실행되고픈 어드바이스 (`try-finally` 와 동치)          |
+| `@Around`           | 메서드 실행 이전, 에러 throw 후, 실행 후 등 위 모든 어드바이스 를 포괄할 수 있는 어드바이스      |
 
 이를 직접 확인해보자.
 
 <details><summary> [자세한 코드]</summary>
 
 ```java
+import org.aspectj.lang.annotation.*;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
 
 @Aspect
 @Component
 public class SomeAspect {
-  @Before("execution(* practice.advice_example.Bean.*(*))")
-  public void beforeAdvice() {
-    System.out.println("\n<== Before Advice Invoked!");
-  }
+    @Before("execution(* practice.advice_example.Bean.*(*))")
+    public void beforeAdvice() {
+        System.out.println("\n<== Before Advice Invoked!");
+    }
 
-  @AfterReturning("execution(* practice.advice_example.Bean.*(*))")
-  public void afterAdvice() {
-    System.out.println("<== AfterReturning Advice Invoked!");
-  }
+    @AfterReturning("execution(* practice.advice_example.Bean.*(*))")
+    public void afterAdvice() {
+        System.out.println("<== AfterReturning Advice Invoked!");
+    }
 
-  @AfterThrowing("execution(* practice.advice_example.Bean.*(*))")
-  public void afterThrowAdvice() {
-    System.out.println("<== AfterThrowing Advice Invoked!");
-  }
+    @AfterThrowing("execution(* practice.advice_example.Bean.*(*))")
+    public void afterThrowAdvice() {
+        System.out.println("<== AfterThrowing Advice Invoked!");
+    }
 
-  @After("execution(* practice.advice_example.Bean.*(*))")
-  public void afterAdvice(JoinPoint joinPoint) {
-    System.out.println("<== After Advice Invoked!\n");
-  }
+    @After("execution(* practice.advice_example.Bean.*(*))")
+    public void afterAdvice(JoinPoint joinPoint) {
+        System.out.println("<== After Advice Invoked!\n");
+    }
+
+    @Around("execution(* practice.advice_example.Bean.*(*))")
+    public Object aroundAdvice(ProceedingJoinPoint joinPoint) throws Throwable {
+        System.out.println("<== Around Advice Invoked!");
+        Object proceed = joinPoint.proceed();
+        System.out.println("<== Releasing Around Advice!\n");
+        return proceed;
+    }
 }
+
 ```
 
 ```java
@@ -135,15 +146,19 @@ System.out.println("--------------------------------------");
 ```
 --------------------------------------
 [ON MAIN] Before calling someMethod
+<== Around Advice Invoked!
 
 <== Before Advice Invoked!
 [AT BEAN] someMethod in Process with arg : given parameter
 <== AfterReturning Advice Invoked!
 <== After Advice Invoked!
 
+<== Releasing Around Advice!
+
 [ON MAIN] Returned: someMethod
 --------------------------------------
 [ON MAIN] Before calling someMethod
+<== Around Advice Invoked!
 
 <== Before Advice Invoked!
 [AT BEAN] someMethod in Process with arg : <== AfterThrowing Advice Invoked!
@@ -171,17 +186,68 @@ public void afterAdvice() {
 }
 ```
 
-위 코드를 보면 `... ("execution(* practice.advice_example.Bean.*(*))")` 과 같은 표현식이 있는데, 이는 `AspectJ` 식 Pointcut 표현식으로, 프로그램상 모든 Join Point 중 특정한 것들을 지칭할 수 있다.
+위 코드를 보면 `... ("execution(* practice.advice_example.Bean.*(*))")` 과 같은 표현식이 있는데, 이는 `AspectJ` 식 Pointcut 표현식으로, 표현식을 잉요해 프로그램상 모든 Join Point 중 특정한 것들을 지칭할 수 있다.
 
-스프링 aspect 는 기본적으로 `AspectJ` 표현식으로 Pointcut 을 지칭하며 메서드의 이름, 메서드의 반환 타입, 심지어 메서드의 인자에 따라 Pointcut 을 추릴 수 있다.
+스프링 aspect 는 기본적으로 `AspectJ` 표현식으로 Pointcut 을 지칭하며 메서드의 이름, 메서드의 반환 타입, 심지어 메서드의 인자 타입에 따라 Pointcut 을 추릴 수 있다.
+
+```
+--------------------------------------
+[ON MAIN] Before calling someMethod
+<== Around Advice Invoked!
+
+<== Before Advice Invoked!
+[AT BEAN] someMethod in Process with arg : given parameter
+<== AfterReturning Advice Invoked!
+<== After Advice Invoked!
+
+<== Releasing Around Advice!
+
+[ON MAIN] Returned: someMethod
+--------------------------------------
+[ON MAIN] Before calling someMethod
+<== Around Advice Invoked!
+
+<== Before Advice Invoked!
+[AT BEAN] someMethod in Process with arg : <== AfterThrowing Advice Invoked!
+<== After Advice Invoked!
+
+[ON MAIN] Exception occurred in method!
+--------------------------------------
+```
+
+그래서 위 출력을 보면 `[AT BEAN]` 이 출력되기 전, `<== Before Advice Invoked!` 가 출력되고, `[ON MAIN]` 에서 메서드 반환값인 `someMethod` 가 출력되기 전, `<== After Advice Invoked!` 가 출력되는 것을 볼 수 있다.
 
 ---
 
 ### `@AfterThrowing`, `@After` Advice
 
+만약 메서드가 실행 중 에러가 발생하면 어떨까?
+
+```java
+try {
+    System.out.println("------------------------------");
+
+    System.out.println("[ON MAIN] Before calling someMethod");
+    String returned2 = bean.someMethod(null);
+
+    System.out.println("[ON MAIN] Returned: " + returned2);
+}
+catch (Exception e) {
+    System.out.println("[ON MAIN] Exception occurred in method!");
+}
+
+System.out.println("------------------------------");
+```
+
+위 코드는 `bean.someMethod(null)` 을 실행하여 의도적으로 `NullPointException` 을 일으킨다.
+
+이전 `@Before` 어드바이스 경우, 메서드 실행 전에 사용되므로 아무런 문제가 없다.
+
+하지만 `@AfterReturning` 어드바이스는 실행 중 에러로 인해 중단되었으므로, 해당 어드바이스가 실행되지 않는다.
+
 ---
 
-### `@Around` Advice
+### `@Around` Advice 와 `JoinPoint`, `ProceedingJoinPoint`
 
 ---
 
@@ -190,35 +256,6 @@ public void afterAdvice() {
 [//]: # (TODO_imp spring-aop & aop terminology 합쳐서 코드 그림으로 보여주기)
 
 ---
-
-> ?? `@EnableAspectJAutoProxy` 잘못 붙였는데도 실행 왜 됨???
-> https://stackoverflow.com/questions/48625149/spring-aop-works-without-enableaspectjautoproxy
->
-> 위 글에선 Spring Boot 일 때 `@SpringBootApplication` 에 섞여있다고 함. 여기까지는 나랑 상관 없는데 `AopAutoConfiguration.java` 보면
-> 관련된 `@ConditionalOnClass` 어노테이션에 `Aspect.class` 가 있는 걸 볼 수 있음. `@ConditionalOnClass` 는 특정 class 파일이 존재하면 bean 을 등록하는
-> 어노테이션이라고 함.
->
-> 그래서 비록 boot 는 아니지만 뭔가 `@ConditionalOnClass` 비슷한 거 때문에 `@Aspect` 어노테이션 붙은 클래스 인식하고 자동으로 `@EnableAspectJAutoProxy` 붙여준
-> 듯??
-
-
-Spring AOP includes the following types of advice:
-
-Before advice: Advice that runs before a join point but that does not have the ability to prevent execution flow
-proceeding to the join point (unless it throws an exception).
-
-After returning advice: Advice to be run after a join point completes normally (for example, if a method returns without
-throwing an exception).
-
-After throwing advice: Advice to be run if a method exits by throwing an exception.
-
-After (finally) advice: Advice to be run regardless of the means by which a join point exits (normal or exceptional
-return).
-
-Around advice: Advice that surrounds a join point such as a method invocation. This is the most powerful kind of advice.
-Around advice can perform custom behavior before and after the method invocation. It is also responsible for choosing
-whether to proceed to the join point or to shortcut the advised method execution by returning its own return value or
-throwing an exception.
 
 ---
 

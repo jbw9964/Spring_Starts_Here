@@ -1,8 +1,9 @@
 package practice.advice_example;
 
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.annotation.*;
 import org.springframework.stereotype.Component;
+import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
 
 @Aspect
 @Component
@@ -25,5 +26,13 @@ public class SomeAspect {
     @After("execution(* practice.advice_example.Bean.*(*))")
     public void afterAdvice(JoinPoint joinPoint) {
         System.out.println("<== After Advice Invoked!\n");
+    }
+
+    @Around("execution(* practice.advice_example.Bean.*(*))")
+    public Object aroundAdvice(ProceedingJoinPoint joinPoint) throws Throwable {
+        System.out.println("<== Around Advice Invoked!");
+        Object proceed = joinPoint.proceed();
+        System.out.println("<== Releasing Around Advice!\n");
+        return proceed;
     }
 }

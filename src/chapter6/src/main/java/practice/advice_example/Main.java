@@ -11,13 +11,13 @@ public class Main {
 
         Bean bean = context.getBean(Bean.class);
 
-        System.out.println("------------------------------");
+        System.out.println("--------------------------------------");
         System.out.println("[ON MAIN] Before calling someMethod");
-        try {
-            String returned1 = bean.someMethod("given parameter");
+        String returned1 = bean.someMethod("given parameter");
 
-            System.out.println("[ON MAIN] Returned: " + returned1);
-            System.out.println("------------------------------");
+        System.out.println("[ON MAIN] Returned: " + returned1);
+        try {
+            System.out.println("--------------------------------------");
 
             System.out.println("[ON MAIN] Before calling someMethod");
             String returned2 = bean.someMethod(null);
@@ -28,6 +28,6 @@ public class Main {
             System.out.println("[ON MAIN] Exception occurred in method!");
         }
 
-        System.out.println("------------------------------");
+        System.out.println("--------------------------------------");
     }
 }
