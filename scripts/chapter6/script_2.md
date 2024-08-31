@@ -4,7 +4,7 @@
 
 이전 글에서는 AOP 에 대한 필수적인 지식과 Spring-aop 가 Proxy 를 이용해 작동하는 것을 알아보았다.
 
-이번 글에서는 스프링에서 사용할 수 있는 Advice 에 대해 알아본다. 
+이번 글에서는 스프링에서 사용할 수 있는 Advice 에 대해 알아본다.
 
 ---
 
@@ -469,6 +469,8 @@ public Object aroundAdvice(ProceedingJoinPoint joinPoint) throws Throwable {
 
   <img src="../../images/chapter6/advice_2.png" width=80% height=80%>
 </p>
+
+[_(Chapter 6 : Using aspects with Spring AOP (3/3) 에 계속...)_](./script_3.md)
 
 ---
 
