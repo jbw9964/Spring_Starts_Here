@@ -220,6 +220,15 @@ Config.showIdentity(advisedBean);
 >
 > 이들에 대한 Spring 공식 문서도 존재한다. [`[5]`](#reference)
 
+---
+
+## Summary
+
+- 관점 지향 프로그래밍은 다음 5 가지 주된 개념이 존재한다.
+    - `Aspect`, `Join Point`, `Advice`, `Pointcut`, `Target Object`
+- 스프링은 bean 으로 Proxy 를 제공하여 AOP 기술을 가능케 한다.
+- Spring-aop 가 Proxy 를 생성하는 방법은 `JDK Dynamic Proxy`, `CGLIB` 를 이용하는 방식이 있으며, 이는 모두 `Runtime-weaving` 이다. [`[6]`](#reference)
+- Spring-aop 는 Proxy 가 필요한 개체들만 Proxy 로 제공한다.
 
 [_(Chapter 6 : Using aspects with Spring AOP (2/3) 에 계속...)_](./script_2.md)
 
